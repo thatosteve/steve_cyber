@@ -1,0 +1,253 @@
+﻿<Window x:Class="steve_cyber.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:steve_cyber"
+        mc:Ignorable="d"
+        Title="CyberMind" Height="600" Width="900"
+        Background="#1A1A2E"
+        WindowStartupLocation="CenterScreen">
+    <Grid>
+
+        <!--  HOME GRID -->
+        <Grid x:Name="home_grid" Visibility="Visible" Background="#1A1A2E">
+
+            <!-- Logo -->
+            <Image
+    Source="/logo.jpg"
+    Height="200"
+    Width="300"
+    Margin="0,0,0,200"
+    />
+
+            <!-- welcome message -->
+            <TextBlock
+                Text="Welcome to CyberMind"
+                Height="30"
+                Width="300"
+                TextAlignment="Center"
+                Margin="0,20,0,0"
+                FontFamily="Arial Rounded MT Bold"
+                Foreground="#00D4FF"
+                FontSize="20"
+                FontWeight="Bold"
+                />
+
+            <!-- tagline -->
+            <TextBlock
+                Text="Your smart security assistant"
+                Height="20"
+                Width="270"
+                TextAlignment="Center"
+                Margin="0,60,0,0"
+                FontFamily="Arial Rounded MT Bold"
+                Foreground="#A0A0B0"
+                FontSize="11"
+                />
+
+            <!-- button to continue -->
+            <Button
+                Height="45"
+                Width="300"
+                Margin="0,200,0,0"
+                Content="Get Started"
+                Click="proceed"
+                Background="#00D4FF"
+                Foreground="#1A1A2E"
+                FontFamily="Arial Rounded MT Bold"
+                FontWeight="Bold"
+                FontSize="14"
+                BorderThickness="0"
+                Cursor="Hand"
+                />
+
+            <!-- footer -->
+            <TextBlock
+                Text="Secure  |  Smart  |  Reliable"
+                Height="20"
+                Width="270"
+                TextAlignment="Center"
+                VerticalAlignment="Bottom"
+                Margin="0,0,0,10"
+                FontFamily="Arial Rounded MT Bold"
+                FontSize="10"
+                Foreground="#404060"
+                />
+
+        </Grid>
+
+        <!-- USERNAME GRID -->
+        <Grid x:Name="username_grid" Visibility="Hidden" Background="#1A1A2E">
+
+            <!-- Logo -->
+            <Image
+                Source="/logo.jpg"
+                Height="200"
+                Width="300"
+                Margin="0,0,0,200"
+                />
+
+            <!-- Hint message -->
+            <TextBlock
+                Text="Enter username"
+                Height="20"
+                Width="270"
+                TextAlignment="Center"
+                Margin="0,30,0,0"
+                FontFamily="Arial Rounded MT Bold"
+                Foreground="#00D4FF"
+                FontSize="13"
+                />
+
+            <!-- Enter/Prompt username -->
+            <TextBox
+                Height="40"
+                Width="270"
+                TextAlignment="Center"
+                Margin="0,100,0,0"
+                FontFamily="Arial Rounded MT Bold"
+                x:Name="usernames_input"
+                Background="#16213E"
+                Foreground="#FFFFFF"
+                BorderBrush="#00D4FF"
+                BorderThickness="1"
+                CaretBrush="#00D4FF"
+                />
+
+            <!-- error message -->
+            <TextBlock
+                Text="please enter username to continue..."
+                Height="20"
+                Width="270"
+                TextAlignment="Center"
+                Margin="0,180,0,0"
+                Foreground="#FF6B6B"
+                FontFamily="Arial Rounded MT Bold"
+                />
+
+            <!-- button to submit name -->
+            <Button
+                Height="40"
+                Width="270"
+                Margin="0,250,0,0"
+                Content="Submit Username"
+                Click="submit_name"
+                Background="#00D4FF"
+                Foreground="#1A1A2E"
+                FontFamily="Arial Rounded MT Bold"
+                FontWeight="Bold"
+                BorderThickness="0"
+                Cursor="Hand"
+                />
+
+        </Grid>
+
+        <!-- CHAT GRID -->
+        <Grid x:Name="chat_grid" Visibility="Hidden" Background="#1A1A2E">
+
+            <!-- rows for layout -->
+            <Grid.RowDefinitions>
+                <RowDefinition Height="50"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="70"/>
+            </Grid.RowDefinitions>
+
+            <!-- header bar row 0 -->
+            <Border
+                Grid.Row="0"
+                Background="#16213E"
+                BorderBrush="#00D4FF"
+                BorderThickness="0,0,0,1"
+                >
+                <Grid>
+
+                    <!-- app name -->
+                    <TextBlock
+                        Text="CyberMind"
+                        Foreground="#00D4FF"
+                        FontFamily="Arial Rounded MT Bold"
+                        FontSize="16"
+                        FontWeight="Bold"
+                        VerticalAlignment="Center"
+                        Margin="20,0,0,0"
+                        />
+
+                    <!-- online status -->
+                    <TextBlock
+                        Text="● Online"
+                        Foreground="#00FF99"
+                        FontFamily="Arial Rounded MT Bold"
+                        FontSize="11"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Right"
+                        Margin="0,0,20,0"
+                        />
+
+                </Grid>
+            </Border>
+
+            <!-- chat messages list row 1 -->
+            <ListView
+                x:Name="chats"
+                Grid.Row="1"
+                Background="#1A1A2E"
+                BorderThickness="0"
+                Margin="10,10,10,10"
+                />
+
+            <!-- bottom input area row 2 -->
+            <Border
+                Grid.Row="2"
+                Background="#16213E"
+                BorderBrush="#00D4FF"
+                BorderThickness="0,1,0,0"
+                >
+                <Grid Margin="10,0,10,0">
+
+                    <!-- columns for input and button -->
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="120"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- TextBox for typing questions -->
+                    <TextBox
+                        x:Name="question"
+                        Grid.Column="0"
+                        Height="40"
+                        VerticalAlignment="Center"
+                        Background="#1A1A2E"
+                        Foreground="#FFFFFF"
+                        BorderBrush="#00D4FF"
+                        BorderThickness="1"
+                        FontSize="13"
+                        FontFamily="Arial Rounded MT Bold"
+                        CaretBrush="#00D4FF"
+                        KeyDown="question_KeyDown"
+                        />
+
+                    <!-- send button -->
+                    <Button
+                        Grid.Column="1"
+                        Height="40"
+                        Margin="10,0,0,0"
+                        VerticalAlignment="Center"
+                        Content="Send ➤"
+                        Click="send"
+                        Background="#00D4FF"
+                        Foreground="#1A1A2E"
+                        FontFamily="Arial Rounded MT Bold"
+                        FontWeight="Bold"
+                        FontSize="12"
+                        BorderThickness="0"
+                        Cursor="Hand"
+                        />
+
+                </Grid>
+            </Border>
+
+        </Grid>
+
+    </Grid>
+</Window>
