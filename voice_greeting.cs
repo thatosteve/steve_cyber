@@ -17,7 +17,7 @@ namespace steve_cyber
             //create an instance for the soundPlayer class
             SoundPlayer greetMe = new SoundPlayer(auto_path);
             //then greet
-            greetMe.Play();
+            
 
         }//end of greet method
 
