@@ -294,7 +294,7 @@ namespace steve_cyber
         private void clearChat(object sender, RoutedEventArgs e)
         {
             chats.Items.Clear();
-            DisplayAsciiArt();
+           
             error_method("Steve_Cyber", "Chat history has been cleared. How can I help you today?");
         }
 
