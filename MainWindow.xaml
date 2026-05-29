@@ -15,7 +15,7 @@
 
             <!-- Logo -->
             <Image
-                Source="/logo.png"
+                Source="/logo.jpg"
                 Height="180"
                 Width="270"
                 Margin="0,50,0,200"
