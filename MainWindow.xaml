@@ -5,52 +5,52 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:steve_cyber"
         mc:Ignorable="d"
-        Title="CyberMind" Height="600" Width="900"
+        Title="Steve_Cyber" Height="600" Width="900"
         Background="#1A1A2E"
         WindowStartupLocation="CenterScreen">
     <Grid>
 
-        <!--  HOME GRID -->
+        <!-- HOME GRID -->
         <Grid x:Name="home_grid" Visibility="Visible" Background="#1A1A2E">
 
             <!-- Logo -->
             <Image
-    Source="/logo.jpg"
-    Height="200"
-    Width="300"
-    Margin="0,0,0,200"
-    />
+                Source="/logo.jpg"
+                Height="180"
+                Width="270"
+                Margin="0,50,0,200"
+                />
 
             <!-- welcome message -->
             <TextBlock
-                Text="Welcome to CyberMind"
-                Height="30"
-                Width="300"
+                Text="Welcome to Steve_Cyber"
+                Height="35"
+                Width="350"
                 TextAlignment="Center"
                 Margin="0,20,0,0"
                 FontFamily="Arial Rounded MT Bold"
                 Foreground="#00D4FF"
-                FontSize="20"
+                FontSize="22"
                 FontWeight="Bold"
                 />
 
             <!-- tagline -->
             <TextBlock
-                Text="Your smart security assistant"
-                Height="20"
-                Width="270"
+                Text="Your Smart Cybersecurity Assistant"
+                Height="25"
+                Width="300"
                 TextAlignment="Center"
-                Margin="0,60,0,0"
+                Margin="0,65,0,0"
                 FontFamily="Arial Rounded MT Bold"
                 Foreground="#A0A0B0"
-                FontSize="11"
+                FontSize="12"
                 />
 
             <!-- button to continue -->
             <Button
                 Height="45"
-                Width="300"
-                Margin="0,200,0,0"
+                Width="280"
+                Margin="0,220,0,0"
                 Content="Get Started"
                 Click="proceed"
                 Background="#00D4FF"
@@ -64,14 +64,14 @@
 
             <!-- footer -->
             <TextBlock
-                Text="Secure  |  Smart  |  Reliable"
+                Text="Secure | Smart | Reliable"
                 Height="20"
-                Width="270"
+                Width="300"
                 TextAlignment="Center"
                 VerticalAlignment="Bottom"
-                Margin="0,0,0,10"
+                Margin="0,0,0,15"
                 FontFamily="Arial Rounded MT Bold"
-                FontSize="10"
+                FontSize="11"
                 Foreground="#404060"
                 />
 
@@ -82,61 +82,64 @@
 
             <!-- Logo -->
             <Image
-                Source="/logo.jpg"
-                Height="200"
-                Width="300"
-                Margin="0,0,0,200"
+                Source="/logo.png"
+                Height="160"
+                Width="240"
+                Margin="0,40,0,200"
                 />
 
             <!-- Hint message -->
             <TextBlock
-                Text="Enter username"
-                Height="20"
-                Width="270"
+                Text="Enter Your Username"
+                Height="25"
+                Width="300"
                 TextAlignment="Center"
-                Margin="0,30,0,0"
+                Margin="0,25,0,0"
                 FontFamily="Arial Rounded MT Bold"
                 Foreground="#00D4FF"
-                FontSize="13"
+                FontSize="14"
                 />
 
             <!-- Enter/Prompt username -->
             <TextBox
-                Height="40"
-                Width="270"
+                Height="42"
+                Width="280"
                 TextAlignment="Center"
-                Margin="0,100,0,0"
+                Margin="0,110,0,0"
                 FontFamily="Arial Rounded MT Bold"
                 x:Name="usernames_input"
                 Background="#16213E"
                 Foreground="#FFFFFF"
                 BorderBrush="#00D4FF"
-                BorderThickness="1"
+                BorderThickness="2"
                 CaretBrush="#00D4FF"
+                FontSize="14"
                 />
 
             <!-- error message -->
             <TextBlock
-                Text="please enter username to continue..."
+                Text="Please enter username to continue..."
                 Height="20"
-                Width="270"
+                Width="300"
                 TextAlignment="Center"
-                Margin="0,180,0,0"
+                Margin="0,190,0,0"
                 Foreground="#FF6B6B"
                 FontFamily="Arial Rounded MT Bold"
+                FontSize="11"
                 />
 
             <!-- button to submit name -->
             <Button
-                Height="40"
-                Width="270"
+                Height="42"
+                Width="280"
                 Margin="0,250,0,0"
-                Content="Submit Username"
+                Content="Start Chatting"
                 Click="submit_name"
                 Background="#00D4FF"
                 Foreground="#1A1A2E"
                 FontFamily="Arial Rounded MT Bold"
                 FontWeight="Bold"
+                FontSize="13"
                 BorderThickness="0"
                 Cursor="Hand"
                 />
@@ -148,9 +151,9 @@
 
             <!-- rows for layout -->
             <Grid.RowDefinitions>
-                <RowDefinition Height="50"/>
+                <RowDefinition Height="55"/>
                 <RowDefinition Height="*"/>
-                <RowDefinition Height="70"/>
+                <RowDefinition Height="75"/>
             </Grid.RowDefinitions>
 
             <!-- header bar row 0 -->
@@ -158,31 +161,50 @@
                 Grid.Row="0"
                 Background="#16213E"
                 BorderBrush="#00D4FF"
-                BorderThickness="0,0,0,1"
+                BorderThickness="0,0,0,2"
                 >
                 <Grid>
 
                     <!-- app name -->
                     <TextBlock
-                        Text="CyberMind"
+                        Text="Steve_Cyber"
                         Foreground="#00D4FF"
                         FontFamily="Arial Rounded MT Bold"
-                        FontSize="16"
+                        FontSize="18"
                         FontWeight="Bold"
                         VerticalAlignment="Center"
                         Margin="20,0,0,0"
                         />
 
-                    <!-- online status -->
-                    <TextBlock
-                        Text="● Online"
-                        Foreground="#00FF99"
+                    <!-- Clear Chat button -->
+                    <Button
+                        Content="Clear Chat"
+                        Background="#FF6B6B"
+                        Foreground="#1A1A2E"
                         FontFamily="Arial Rounded MT Bold"
+                        FontWeight="Bold"
                         FontSize="11"
-                        VerticalAlignment="Center"
+                        Width="90"
+                        Height="30"
+                        BorderThickness="0"
+                        Cursor="Hand"
+                        Click="clearChat"
                         HorizontalAlignment="Right"
-                        Margin="0,0,20,0"
+                        Margin="0,0,120,0"
+                        VerticalAlignment="Center"
                         />
+
+                    <!-- online status -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,20,0">
+                        <Ellipse Width="10" Height="10" Fill="#00FF99" Margin="0,0,5,0"/>
+                        <TextBlock
+                            Text="Online"
+                            Foreground="#00FF99"
+                            FontFamily="Arial Rounded MT Bold"
+                            FontSize="11"
+                            VerticalAlignment="Center"
+                            />
+                    </StackPanel>
 
                 </Grid>
             </Border>
@@ -193,7 +215,7 @@
                 Grid.Row="1"
                 Background="#1A1A2E"
                 BorderThickness="0"
-                Margin="10,10,10,10"
+                Margin="10,10,10,5"
                 />
 
             <!-- bottom input area row 2 -->
@@ -201,39 +223,61 @@
                 Grid.Row="2"
                 Background="#16213E"
                 BorderBrush="#00D4FF"
-                BorderThickness="0,1,0,0"
+                BorderThickness="0,2,0,0"
                 >
-                <Grid Margin="10,0,10,0">
+                <Grid Margin="15,10,15,10">
 
-                    <!-- columns for input and button -->
+                    <!-- columns for input, clear button, and send button -->
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="120"/>
+                        <ColumnDefinition Width="80"/>
+                        <ColumnDefinition Width="80"/>
                     </Grid.ColumnDefinitions>
 
                     <!-- TextBox for typing questions -->
                     <TextBox
                         x:Name="question"
                         Grid.Column="0"
-                        Height="40"
+                        Height="42"
                         VerticalAlignment="Center"
                         Background="#1A1A2E"
                         Foreground="#FFFFFF"
                         BorderBrush="#00D4FF"
-                        BorderThickness="1"
+                        BorderThickness="2"
                         FontSize="13"
                         FontFamily="Arial Rounded MT Bold"
                         CaretBrush="#00D4FF"
                         KeyDown="question_KeyDown"
                         />
 
-                    <!-- send button -->
+                    <!-- Clear button -->
                     <Button
                         Grid.Column="1"
-                        Height="40"
-                        Margin="10,0,0,0"
+                        Height="42"
+                        Width="70"
+                        Margin="10,0,5,0"
+                        HorizontalAlignment="Left"
                         VerticalAlignment="Center"
-                        Content="Send ➤"
+                        Content="Clear"
+                        Click="clearText"
+                        Background="#FF6B6B"
+                        Foreground="#1A1A2E"
+                        FontFamily="Arial Rounded MT Bold"
+                        FontWeight="Bold"
+                        FontSize="12"
+                        BorderThickness="0"
+                        Cursor="Hand"
+                        />
+
+                    <!-- Send button -->
+                    <Button
+                        Grid.Column="2"
+                        Height="42"
+                        Width="70"
+                        Margin="5,0,0,0"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        Content="Send"
                         Click="send"
                         Background="#00D4FF"
                         Foreground="#1A1A2E"

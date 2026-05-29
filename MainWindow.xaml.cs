@@ -24,16 +24,15 @@ namespace steve_cyber
         // Memory storage for user preferences and conversation context
         Dictionary<string, string> userMemory = new Dictionary<string, string>();
         string lastTopic = string.Empty;
-        string currentTopic = string.Empty;
+        string lastResponseText = string.Empty;
 
         // Conversation flow tracking
-        int followUpCount = 0;
+        int counting = 0;
 
         // User variables
         string username = string.Empty;
-        int counting = 0;
 
-       
+        
 
         public MainWindow()
         {
@@ -42,14 +41,14 @@ namespace steve_cyber
             // Initialize chatbot responses
             new Steve_Cyber(reply, ignore) { };
 
-          
+           
 
             // Voice greeting
             voice_greeting greet = new voice_greeting();
             greet.greet();
         }
 
-       
+        
 
         // proceed event handler
         private void proceed(object sender, RoutedEventArgs e)
@@ -69,18 +68,47 @@ namespace steve_cyber
             username_grid.Visibility = Visibility.Hidden;
             chat_grid.Visibility = Visibility.Visible;
 
-            // Send personalized welcome with cybersecurity tips
-            string[] welcomeTips = {
-                "I'm here to help you stay safe online!",
-                "You can ask me about passwords, phishing, scams, and more!",
-                "Try saying 'I'm interested in privacy' and I'll remember it!",
-                "Ask me 'tell me more' after any tip for extra information!"
-            };
+            // Send personalized welcome - only ONE welcome message
+            error_method("Steve_Cyber", "Hello " + username + "! I'm here to help you stay safe online.");
+            error_method("Steve_Cyber", "You can ask me about passwords, phishing, scams, privacy, 2FA, and more.");
+            error_method("Steve_Cyber", "Try saying 'tell me about scams' or 'I'm interested in privacy'");
+        }
 
-            Random rand = new Random();
-            error_method("CyberMind", "Hello " + username + "!");
-            error_method("CyberMind", welcomeTips[rand.Next(welcomeTips.Length)]);
-            error_method("CyberMind", "What would you like to learn about today?");
+        // Input validation method
+        private bool ValidateInput(string input)
+        {
+            // Check for empty input
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                error_method("Steve_Cyber", "Please enter a question or message.");
+                return false;
+            }
+
+            // Check for maximum length (200 characters)
+            if (input.Length > 200)
+            {
+                error_method("Steve_Cyber", "Your message is too long. Please keep it under 200 characters.");
+                return false;
+            }
+
+            // Check if input is just numbers or symbols
+            bool onlySymbols = true;
+            foreach (char c in input)
+            {
+                if (char.IsLetter(c))
+                {
+                    onlySymbols = false;
+                    break;
+                }
+            }
+
+            if (onlySymbols && input.Length > 0)
+            {
+                error_method("Steve_Cyber", "I couldn't understand that. Please use words to ask your question.");
+                return false;
+            }
+
+            return true;
         }
 
         // send event handler
@@ -88,14 +116,17 @@ namespace steve_cyber
         {
             string rawQuestion = question.Text.ToString().Trim();
 
-            if (string.IsNullOrWhiteSpace(rawQuestion))
+            // Input validation
+            if (!ValidateInput(rawQuestion))
             {
-                error_method("CyberMind", "Please enter a question.");
+                question.Clear();
                 return;
             }
 
             string questions = RemoveSpecialCharacters(rawQuestion);
-            error_method(username, rawQuestion);
+
+            // Show user message in GREEN
+            error_method_user(username, rawQuestion);
 
             // Check for conversation flow commands first
             if (HandleConversationFlow(questions))
@@ -121,42 +152,34 @@ namespace steve_cyber
         {
             string lowerInput = input.ToLower();
 
-            // Check for follow-up requests
+            // Check for "tell me more" or "more examples"
             if (lowerInput.Contains("tell me more") || lowerInput.Contains("explain more") ||
-                lowerInput.Contains("another tip") || lowerInput.Contains("another one") ||
-                lowerInput.Contains("more please") || lowerInput.Contains("continue") ||
-                lowerInput.Contains("go on"))
+                lowerInput.Contains("more examples") || lowerInput.Contains("more about") ||
+                lowerInput.Contains("tell me about") || lowerInput.Contains("what about") ||
+                lowerInput.Contains("another tip") || lowerInput.Contains("more tips"))
             {
-                if (!string.IsNullOrEmpty(lastTopic))
-                {
-                    followUpCount++;
-                    error_method("CyberMind", "Let me share more about " + lastTopic + "!");
+                // Extract topic from the input if they said "tell me about X"
+                string requestedTopic = ExtractTopicFromInput(lowerInput);
 
-                    // Provide additional information based on last topic
+                if (!string.IsNullOrEmpty(requestedTopic))
+                {
+                    // User asked about a specific topic
+                    string moreInfo = GetMoreInfoOnTopic(requestedTopic);
+                    error_method("Steve_Cyber", moreInfo);
+                    lastTopic = requestedTopic;
+                    return true;
+                }
+                else if (!string.IsNullOrEmpty(lastTopic))
+                {
+                    // User said "tell me more" about the last topic
                     string moreInfo = GetMoreInfoOnTopic(lastTopic);
-                    error_method("CyberMind", moreInfo);
+                    error_method("Steve_Cyber", "Here is more information about " + lastTopic + ":");
+                    error_method("Steve_Cyber", moreInfo);
                     return true;
                 }
                 else
                 {
-                    error_method("CyberMind", "I haven't shared any topic yet. Ask me about cybersecurity like 'What is phishing?' or 'Tell me about passwords!'");
-                    return true;
-                }
-            }
-
-            // Check for "give me another tip"
-            if (lowerInput.Contains("another tip") || lowerInput.Contains("more tips") ||
-                lowerInput.Contains("different tip") || lowerInput.Contains("another one please"))
-            {
-                if (!string.IsNullOrEmpty(currentTopic))
-                {
-                    string alternateTip = GetAlternateTip(currentTopic);
-                    error_method("CyberMind", alternateTip);
-                    return true;
-                }
-                else
-                {
-                    error_method("CyberMind", "What topic would you like another tip about? Try asking about passwords, phishing, or privacy first!");
+                    error_method("Steve_Cyber", "Please ask me about a specific topic first. Try 'tell me about phishing' or 'explain passwords'");
                     return true;
                 }
             }
@@ -164,18 +187,35 @@ namespace steve_cyber
             return false;
         }
 
+        // Extract topic from user input
+        private string ExtractTopicFromInput(string input)
+        {
+            string[] topics = { "password", "phishing", "scam", "privacy", "firewall", "2fa", "two factor", "wifi", "vpn", "hacking", "malware" };
+
+            foreach (string topic in topics)
+            {
+                if (input.Contains(topic))
+                {
+                    if (topic == "2fa" || topic == "two factor")
+                        return "2fa";
+                    return topic;
+                }
+            }
+            return string.Empty;
+        }
+
         // Get more information on a topic
         private string GetMoreInfoOnTopic(string topic)
         {
             Dictionary<string, string> extendedInfo = new Dictionary<string, string>
             {
-                { "password", "Strong passwords should be at least 12 characters long and include uppercase, lowercase, numbers, and symbols. Never reuse passwords across different accounts! Consider using a password manager like Bitwarden or LastPass to generate and store secure passwords." },
-                { "phishing", "Phishing emails often create urgency ('Your account will be closed!'), have spelling errors, or come from slightly misspelled email addresses. Always hover over links before clicking and never download attachments from unknown senders!" },
-                { "scam", "Online scammers in South Africa often pretend to be from banks like Capitec, FNB, or SARS. Remember: No legitimate company will ever ask for your PIN, password, or OTP via phone, email, or WhatsApp. Hang up and call the official number!" },
-                { "privacy", "Your personal information is valuable to scammers! Limit what you share on social media - birthday, address, location tags, and even pet names can be used to guess security questions. Review your privacy settings monthly!" },
-                { "firewall", "A firewall is like a security guard for your internet connection. Windows has a built-in firewall - make sure it's always enabled! It blocks unauthorized access while allowing legitimate traffic through." },
-                { "2fa", "Two-Factor Authentication (2FA) adds a second lock to your accounts. Even if someone steals your password, they still need your phone to get in. Use authenticator apps like Google Authenticator or Microsoft Authenticator instead of SMS when possible!" },
-                { "wifi", "Public Wi-Fi at malls, coffee shops, and airports is convenient but risky! Hackers can intercept your data. Always use a VPN (Virtual Private Network) on public networks, and avoid logging into banking, email, or social media." }
+                { "password", "Strong passwords should be at least 12 characters long and include uppercase, lowercase, numbers, and symbols. Never reuse passwords across different accounts! Use a password manager like Bitwarden or LastPass. Change your passwords every 3-6 months for important accounts." },
+                { "phishing", "Phishing emails often create urgency ('Your account will be closed!'), have spelling errors, or come from slightly misspelled email addresses. Always hover over links before clicking. Never download attachments from unknown senders. Report phishing emails to your email provider." },
+                { "scam", "Common scams in South Africa: Fake banking calls (pretending to be from Capitec, FNB, or Standard Bank), WhatsApp 'Hi Mom' scams, fake job offers asking for money, lottery scams, and SIM swap scams. Never share your OTP or PIN with anyone. Hang up and call the official bank number." },
+                { "privacy", "Review your privacy settings on social media monthly. Limit what personal info you share publicly - birthday, address, phone number, and location. Use different emails for different purposes. Be careful with online quizzes that ask for personal information." },
+                { "firewall", "A firewall monitors incoming and outgoing network traffic. Windows Defender Firewall is built into Windows - make sure it's always enabled. It blocks unauthorized access while allowing legitimate traffic. Never disable your firewall unless you know exactly what you're doing." },
+                { "2fa", "Two-Factor Authentication adds a second layer of security. Use authenticator apps (Google Authenticator, Microsoft Authenticator) instead of SMS when possible. Enable 2FA on email, banking, social media, and any account that offers it. It blocks 99.9% of account takeovers." },
+                { "wifi", "Public Wi-Fi is convenient but risky. Hackers can intercept your data on open networks. Use a VPN on public Wi-Fi. Avoid logging into banking or email. Turn off file sharing. Use HTTPS websites only. Better yet, use your mobile data for sensitive activities." }
             };
 
             foreach (var key in extendedInfo.Keys)
@@ -187,59 +227,6 @@ namespace steve_cyber
             }
 
             return "Staying safe online requires constant awareness. Always think before you click, verify the source of messages, and when in doubt - don't click! Trust your instincts.";
-        }
-
-        // Get alternate tip for a topic
-        private string GetAlternateTip(string topic)
-        {
-            Dictionary<string, List<string>> tipAlternatives = new Dictionary<string, List<string>>
-            {
-                { "password", new List<string> {
-                    "Use a passphrase like 'PurpleElephantDances@Midnight' - easy to remember, hard to crack!",
-                    "Enable Two-Factor Authentication (2FA) on all accounts that offer it - especially email and banking!",
-                    "Change your passwords every 3-6 months for important accounts like email, banking, and social media!",
-                    "Never write passwords on sticky notes or save them in unencrypted files on your computer!"
-                }},
-                { "phishing", new List<string> {
-                    "Check the sender's email address carefully - 'support@paypa1.com' is fake, 'support@paypal.com' is real!",
-                    "Never click links in suspicious emails - type the website address directly into your browser instead!",
-                    "Scammers also use SMS (smishing) and phone calls (vishing). Be suspicious of unexpected messages!",
-                    "Look for red flags: urgent language, spelling errors, generic greetings like 'Dear Customer', and requests for personal info!"
-                }},
-                { "scam", new List<string> {
-                    "Got a call from 'your bank'? Hang up and call back using the official number from their website or your bank card!",
-                    "Never send money to someone you haven't met in person - even if they promise lottery winnings or a 'free gift'!",
-                    "Job scams are common in SA. Never pay for a job application or training - legitimate jobs pay YOU!",
-                    "WhatsApp scams: 'Hi Mom, I broke my phone' messages are often scammers. Always verify by calling the person directly!"
-                }},
-                { "privacy", new List<string> {
-                    "Think before you post! Photos can reveal your location, workplace, daily routine, and even your house number!",
-                    "Review your privacy settings on Facebook, Instagram, TikTok, and LinkedIn every few months - platforms change settings often!",
-                    "Use different email addresses for different purposes: one for banking, one for shopping, one for social media!",
-                    "Never share your ID number, passport number, or home address online - not even in 'harmless' quizzes!"
-                }}
-            };
-
-            Random rand = new Random();
-
-            foreach (var key in tipAlternatives.Keys)
-            {
-                if (topic.ToLower().Contains(key))
-                {
-                    return tipAlternatives[key][rand.Next(tipAlternatives[key].Count)];
-                }
-            }
-
-            string[] generalTips = {
-                "Always use unique passwords for every account - no exceptions!",
-                "Keep your software, apps, and operating system updated - updates fix security holes!",
-                "Enable fingerprint or face recognition on your phone for extra security!",
-                "Don't install apps from outside the official Google Play Store or Apple App Store!",
-                "If something feels off about an email or message - trust your gut and don't click!"
-            };
-
-            Random random = new Random();
-            return generalTips[random.Next(generalTips.Length)];
         }
 
         // Handle memory commands (recall user information)
@@ -254,12 +241,12 @@ namespace steve_cyber
             {
                 if (userMemory.ContainsKey("interests") && !string.IsNullOrEmpty(userMemory["interests"]))
                 {
-                    error_method("CyberMind", "You told me you're interested in: " + userMemory["interests"]);
-                    error_method("CyberMind", "Would you like me to share some tips about " + userMemory["interests"] + "?");
+                    error_method("Steve_Cyber", "You told me you are interested in: " + userMemory["interests"]);
+                    error_method("Steve_Cyber", "Would you like me to share some tips about " + userMemory["interests"] + "?");
                 }
                 else
                 {
-                    error_method("CyberMind", "You haven't told me about your interests yet! Try saying 'I'm interested in privacy' or 'I like learning about passwords' and I'll remember!");
+                    error_method("Steve_Cyber", "You haven't told me about your interests yet. Try saying 'I am interested in privacy' or 'I like learning about passwords' and I will remember!");
                 }
                 return true;
             }
@@ -267,11 +254,10 @@ namespace steve_cyber
             // Recall name
             if (lowerInput.Contains("what is my name") || lowerInput.Contains("do you know my name"))
             {
-                error_method("CyberMind", "Of course! Your name is " + username + "!");
+                error_method("Steve_Cyber", "Of course! Your name is " + username + "!");
                 return true;
             }
 
-            // Store interests in memory when detected in ai_check
             return false;
         }
 
@@ -297,26 +283,31 @@ namespace steve_cyber
             }
         }
 
+        // Clear button event handler
+        private void clearText(object sender, RoutedEventArgs e)
+        {
+            question.Clear();
+            question.Focus();
+        }
+
+        // Clear Chat button event handler
+        private void clearChat(object sender, RoutedEventArgs e)
+        {
+            chats.Items.Clear();
+            DisplayAsciiArt();
+            error_method("Steve_Cyber", "Chat history has been cleared. How can I help you today?");
+        }
+
         // start of ai_chat method
         private void ai_check(string questions)
         {
-            // Check if user entered anything meaningful
             if (string.IsNullOrWhiteSpace(questions))
             {
-                error_method("CyberMind", "Please enter a valid question.");
+                error_method("Steve_Cyber", "Please enter a valid question.");
                 question.Clear();
                 return;
             }
 
-            // Check if the question contains only special characters or empty after cleaning
-            if (questions.Length == 0 || string.IsNullOrWhiteSpace(questions))
-            {
-                error_method("CyberMind", "I couldn't understand that.");
-                question.Clear();
-                return;
-            }
-
-            // Variables for processing
             string[] words = questions.ToLower().Split(new char[] { ' ', ',', '.', '?', '!', ';', ':' }, StringSplitOptions.RemoveEmptyEntries);
             bool found = false;
             string message = string.Empty;
@@ -324,14 +315,11 @@ namespace steve_cyber
             List<string> per_word = new List<string>();
             List<string> answers_found = new List<string>();
 
-            // Track if this is an interest statement
             bool isInterestStatement = false;
             string detectedInterests = string.Empty;
 
-            // Process each word
             foreach (string word in words)
             {
-                // Skip very short words or ignored words
                 if (word.Length < 3 || ignore.Contains(word.ToLower()))
                     continue;
 
@@ -358,10 +346,8 @@ namespace steve_cyber
 
                     if (!string.IsNullOrWhiteSpace(detectedInterests))
                     {
-                        // Store in memory
                         StoreInterestInMemory(detectedInterests);
 
-                        // Save to file
                         string filename = "interested_topic.txt";
                         bool userFound = false;
 
@@ -394,8 +380,7 @@ namespace steve_cyber
                             File.AppendAllText(filename, username + " interested in: " + detectedInterests + "\n");
                         }
 
-                        message += "Thanks for sharing! I'll remember that you're interested in " + detectedInterests + ". ";
-                        currentTopic = detectedInterests;
+                        message += "Thanks for sharing! I will remember that you are interested in " + detectedInterests + ". ";
                         lastTopic = detectedInterests;
                         found = true;
                     }
@@ -419,31 +404,26 @@ namespace steve_cyber
                     string selectedAnswer = per_word[indexing];
                     answers_found.Add(selectedAnswer);
 
-                    // Extract topic for conversation flow
                     string[] answerParts = selectedAnswer.Split(' ');
                     if (answerParts.Length > 0)
                     {
                         string possibleTopic = answerParts[0].ToLower();
-                        if (possibleTopic == "cybersecurity" || possibleTopic == "phishing" || possibleTopic == "password" ||
-                            possibleTopic == "firewall" || possibleTopic == "vpn" || possibleTopic == "fraud" ||
-                            possibleTopic == "scam" || possibleTopic == "privacy" || possibleTopic == "2fa" || possibleTopic == "wifi")
+                        if (possibleTopic == "password" || possibleTopic == "phishing" ||
+                            possibleTopic == "scam" || possibleTopic == "privacy" ||
+                            possibleTopic == "2fa" || possibleTopic == "wifi" || possibleTopic == "firewall")
                         {
-                            currentTopic = possibleTopic;
                             lastTopic = possibleTopic;
                         }
                     }
                 }
             }
 
-            // Show responses or error message
             if (found && answers_found.Count > 0)
             {
-                // Remove duplicate answers
                 answers_found = answers_found.Distinct().ToList();
 
                 foreach (string per_answer in answers_found)
                 {
-                    // Remove the keyword prefix from display
                     string displayAnswer = per_answer;
                     int spaceIndex = per_answer.IndexOf(' ');
                     if (spaceIndex > 0 && spaceIndex < 20)
@@ -453,7 +433,6 @@ namespace steve_cyber
                     message += displayAnswer + "\n";
                 }
 
-                // Personalize response if user has interests stored
                 if (userMemory.ContainsKey("interests") && !isInterestStatement)
                 {
                     string[] personalMessages = {
@@ -465,23 +444,21 @@ namespace steve_cyber
                     message = personalMessages[rand.Next(personalMessages.Length)] + message;
                 }
 
-                error_method("CyberMind", message.TrimEnd('\n'));
-                followUpCount = 0;
+                error_method("Steve_Cyber", message.TrimEnd('\n'));
             }
             else if (!isInterestStatement)
             {
                 string[] fallbackMessages = {
-                    "I'm not sure about that. Could you rephrase? Try asking about passwords, phishing, scams, or online safety!",
+                    "I'm not sure about that. Could you rephrase? Try asking about passwords, phishing, scams, privacy, or 2FA.",
                     "That's outside my cybersecurity knowledge. Ask me about staying safe online!",
                     "I focus on cybersecurity topics. Try 'What is phishing?' or 'How do I create strong passwords?'",
                     "Let's stay on topic! I can help with passwords, phishing emails, scams, privacy, and online safety.",
                     "I didn't quite understand that. Could you rephrase your question about cybersecurity?"
                 };
                 Random random = new Random();
-                error_method("CyberMind", fallbackMessages[random.Next(fallbackMessages.Length)]);
+                error_method("Steve_Cyber", fallbackMessages[random.Next(fallbackMessages.Length)]);
             }
         }
-        // end of ai_chat method
 
         // method to remove special characters
         private string RemoveSpecialCharacters(string input)
@@ -493,45 +470,34 @@ namespace steve_cyber
 
             foreach (char c in input)
             {
-                // Keep letters, numbers, spaces, and basic punctuation
                 if (char.IsLetterOrDigit(c) || char.IsWhiteSpace(c) || c == '\'' || c == '-')
                 {
                     sanitized.Append(c);
                 }
                 else
                 {
-                    // Replace other special characters with space
                     sanitized.Append(' ');
                 }
             }
 
-            // Clean up extra spaces and trim
             string result = sanitized.ToString();
             result = Regex.Replace(result, @"\s+", " ").Trim();
-
             return result;
         }
-        // end of method to remove special characters
 
         // method count to show interests randomly
         private void auto_show_interest()
         {
-            // check if four messages have passed
             if (counting == 4)
             {
-                // read the user's interests from file
                 string filename = "interested_topic.txt";
-
                 if (File.Exists(filename))
                 {
                     string[] lines = File.ReadAllLines(filename);
-
-                    // find the user's line
                     foreach (string line in lines)
                     {
                         if (line.StartsWith(username))
                         {
-                            // get the interests part
                             int colonIndex = line.IndexOf("interested in:");
                             if (colonIndex >= 0)
                             {
@@ -539,72 +505,29 @@ namespace steve_cyber
                                 if (!string.IsNullOrEmpty(interests))
                                 {
                                     string[] reminderMessages = {
-                                        "Just a friendly reminder - you're interested in " + interests + "!",
+                                        "Just a friendly reminder - you are interested in " + interests + "!",
                                         "Remembering your interest in " + interests + " - want to learn more?",
                                         "Since you care about " + interests + ", let me share a tip!"
                                     };
                                     Random rand = new Random();
-                                    error_method("CyberMind", reminderMessages[rand.Next(reminderMessages.Length)]);
+                                    error_method("Steve_Cyber", reminderMessages[rand.Next(reminderMessages.Length)]);
                                 }
                                 break;
                             }
                         }
                     }
                 }
-
-                // reset counting
                 counting = 0;
             }
             else
             {
-                // incrementing
                 counting++;
             }
         }
-        // end of count interest method
 
-        // Display formatted message with border
-        private void DisplayFormattedMessage(string sender, string message)
-        {
-            Border messageBorder = new Border
-            {
-                Margin = new Thickness(0, 5, 0, 5),
-                Padding = new Thickness(10, 8, 10, 8),
-                Background = new SolidColorBrush(Color.FromRgb(83, 52, 131)),
-                BorderBrush = new SolidColorBrush(Color.FromRgb(0, 212, 255)),
-                BorderThickness = new Thickness(1),
-                CornerRadius = new CornerRadius(8)
-            };
-
-            TextBlock messageText = new TextBlock
-            {
-                TextWrapping = TextWrapping.Wrap,
-                FontFamily = new FontFamily("Consolas"),
-                FontSize = 11
-            };
-
-            messageText.Inlines.Add(new Run
-            {
-                Text = sender + ":\n",
-                Foreground = new SolidColorBrush(Color.FromRgb(0, 212, 255)),
-                FontWeight = FontWeights.Bold
-            });
-
-            messageText.Inlines.Add(new Run
-            {
-                Text = message,
-                Foreground = new SolidColorBrush(Color.FromRgb(238, 238, 238))
-            });
-
-            messageBorder.Child = messageText;
-            chats.Items.Add(messageBorder);
-            chats.ScrollIntoView(chats.Items[chats.Items.Count - 1]);
-        }
-
-        // error method
+        // error method for BOT messages (CYAN color)
         private void error_method(string name, string message)
         {
-            // Create a border for chats
             Border messageBorder = new Border
             {
                 Margin = new Thickness(0, 5, 0, 5),
@@ -612,19 +535,9 @@ namespace steve_cyber
                 CornerRadius = new CornerRadius(8)
             };
 
-            // Set different background for user vs bot
-            if (name.ToLower().Contains("cybermind") || name.ToLower().Contains("steve"))
-            {
-                // Bot message - Dark blue/purple theme
-                messageBorder.Background = new SolidColorBrush(Color.FromRgb(83, 52, 131));
-                messageBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(0, 212, 255));
-            }
-            else
-            {
-                // User message - Dark teal theme
-                messageBorder.Background = new SolidColorBrush(Color.FromRgb(22, 33, 62));
-                messageBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(0, 212, 255));
-            }
+            // Bot message - Cyan theme
+            messageBorder.Background = new SolidColorBrush(Color.FromRgb(22, 33, 62));
+            messageBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(0, 212, 255));
             messageBorder.BorderThickness = new Thickness(1);
 
             TextBlock messageText = new TextBlock
@@ -635,7 +548,7 @@ namespace steve_cyber
                 FontSize = 13
             };
 
-            // Set color based on sender
+            // Bot name in CYAN
             Brush nameColor = new SolidColorBrush(Color.FromRgb(0, 212, 255));
             Brush messageColor = new SolidColorBrush(Color.FromRgb(238, 238, 238));
 
@@ -656,8 +569,50 @@ namespace steve_cyber
             chats.Items.Add(messageBorder);
             chats.ScrollIntoView(chats.Items[chats.Items.Count - 1]);
         }
-        // end of error method
+
+        // error method for USER messages (GREEN color)
+        private void error_method_user(string name, string message)
+        {
+            Border messageBorder = new Border
+            {
+                Margin = new Thickness(0, 5, 0, 5),
+                Padding = new Thickness(10, 8, 10, 8),
+                CornerRadius = new CornerRadius(8)
+            };
+
+            // User message - Green theme
+            messageBorder.Background = new SolidColorBrush(Color.FromRgb(22, 33, 62));
+            messageBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(0, 255, 153));
+            messageBorder.BorderThickness = new Thickness(1);
+
+            TextBlock messageText = new TextBlock
+            {
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(2),
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 13
+            };
+
+            // User name in GREEN
+            Brush nameColor = new SolidColorBrush(Color.FromRgb(0, 255, 153));
+            Brush messageColor = new SolidColorBrush(Color.FromRgb(238, 238, 238));
+
+            messageText.Inlines.Add(new Run
+            {
+                Text = name + ": ",
+                Foreground = nameColor,
+                FontWeight = FontWeights.Bold
+            });
+
+            messageText.Inlines.Add(new Run
+            {
+                Text = message,
+                Foreground = messageColor
+            });
+
+            messageBorder.Child = messageText;
+            chats.Items.Add(messageBorder);
+            chats.ScrollIntoView(chats.Items[chats.Items.Count - 1]);
+        }
     }
-    // end of class
 }
-// end of namespace
