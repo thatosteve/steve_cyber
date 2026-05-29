@@ -24,11 +24,11 @@ namespace steve_cyber
             if (!found)
             {
                 File.AppendAllText(filename, name + "\n");
-                error_method("CyberMind", "Hello " + name + "! Welcome to CyberMind Cybersecurity Assistant.", chats);
+                error_method("Steve_Cyber", "Welcome " + name + "!", chats);
             }
             else
             {
-                error_method("CyberMind", "Welcome back " + name + "! How can I help you stay safe online today?", chats);
+                error_method("Steve_Cyber", "Welcome back " + name + "!", chats);
             }
 
             return name;
@@ -60,16 +60,8 @@ namespace steve_cyber
                 CornerRadius = new CornerRadius(8)
             };
 
-            if (name.ToLower().Contains("cybermind"))
-            {
-                messageBorder.Background = new SolidColorBrush(Color.FromRgb(83, 52, 131));
-                messageBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(0, 212, 255));
-            }
-            else
-            {
-                messageBorder.Background = new SolidColorBrush(Color.FromRgb(22, 33, 62));
-                messageBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(0, 212, 255));
-            }
+            messageBorder.Background = new SolidColorBrush(Color.FromRgb(22, 33, 62));
+            messageBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(0, 212, 255));
             messageBorder.BorderThickness = new Thickness(1);
 
             TextBlock messageText = new TextBlock
