@@ -35,6 +35,7 @@ namespace steve_cyber
         private bool isQuizMode = false;
         private bool isTaskMode = false;
 
+        
       
 
         public MainWindow()
@@ -55,7 +56,7 @@ namespace steve_cyber
             greet.greet();
         }
 
-       
+      
 
         private void proceed(object sender, RoutedEventArgs e)
         {
@@ -87,7 +88,7 @@ namespace steve_cyber
             error_method("Steve_Cyber", "What would you like to learn about today?");
         }
 
-        // PART 3 QUIZ METHODs
+        // ---- PART 3: QUIZ METHODS ----
 
         private void StartQuiz(object sender, RoutedEventArgs e)
         {
@@ -169,7 +170,7 @@ namespace steve_cyber
             }
         }
 
-        // PART 3 TASK METHODS
+        // PART 3 TASK METHOD
 
         private void ShowTasks(object sender, RoutedEventArgs e)
         {
@@ -220,9 +221,6 @@ namespace steve_cyber
                     error_method("Steve_Cyber", "Please provide a task title. Example: 'add task: Enable 2FA'");
                     return;
                 }
-
-                error_method("Steve_Cyber", "Task title: " + title);
-                error_method("Steve_Cyber", "To add a description and reminder, use:\nadd full task: [title] | [description] | [days]");
 
                 bool result = taskManager.AddTask(username, title, "", null);
                 if (result)
@@ -397,6 +395,7 @@ namespace steve_cyber
             return true;
         }
 
+        // --- FIXED send() method with reordered checks ---
         private void send(object sender, RoutedEventArgs e)
         {
             string rawQuestion = question.Text.ToString().Trim();
@@ -409,7 +408,7 @@ namespace steve_cyber
 
             string questions = RemoveSpecialCharacters(rawQuestion);
 
-            // Check if in quiz mode
+            // ========== QUIZ MODE ==========
             if (isQuizMode)
             {
                 error_method_user(username, rawQuestion);
@@ -418,7 +417,7 @@ namespace steve_cyber
                 return;
             }
 
-            // Check for quiz trigger
+            // ========== QUIZ TRIGGER ==========
             if (rawQuestion.ToLower().Contains("quiz") || rawQuestion.ToLower().Contains("test"))
             {
                 error_method_user(username, rawQuestion);
@@ -427,7 +426,18 @@ namespace steve_cyber
                 return;
             }
 
-            // Check for task trigger
+            // ========== TASK COMMANDS (MUST BE BEFORE GENERAL "task" CHECK) ==========
+            if (rawQuestion.ToLower().Contains("add task") ||
+                rawQuestion.ToLower().StartsWith("complete ") ||
+                rawQuestion.ToLower().StartsWith("delete "))
+            {
+                error_method_user(username, rawQuestion);
+                HandleTaskInput(rawQuestion);
+                question.Clear();
+                return;
+            }
+
+            // ========== TASK TRIGGER (Show tasks) ==========
             if (rawQuestion.ToLower().Contains("task") || rawQuestion.ToLower().Contains("tasks"))
             {
                 error_method_user(username, rawQuestion);
@@ -436,7 +446,7 @@ namespace steve_cyber
                 return;
             }
 
-            // Check for log trigger
+            // ========== LOG TRIGGER ==========
             if (rawQuestion.ToLower().Contains("log") || rawQuestion.ToLower().Contains("what have you done"))
             {
                 error_method_user(username, rawQuestion);
@@ -445,17 +455,7 @@ namespace steve_cyber
                 return;
             }
 
-            // Check for task commands
-            if (rawQuestion.ToLower().Contains("add task") || rawQuestion.ToLower().Contains("complete") ||
-                rawQuestion.ToLower().Contains("delete") && rawQuestion.ToLower().Contains("task"))
-            {
-                error_method_user(username, rawQuestion);
-                HandleTaskInput(rawQuestion);
-                question.Clear();
-                return;
-            }
-
-            // Check for log commands
+            // ========== LOG SHOW MORE ==========
             if (rawQuestion.ToLower().Contains("show more") && rawQuestion.ToLower().Contains("log"))
             {
                 error_method_user(username, rawQuestion);
@@ -464,7 +464,7 @@ namespace steve_cyber
                 return;
             }
 
-            // Normal chat processing
+            // ========== NORMAL CHAT ==========
             error_method_user(username, rawQuestion);
 
             if (HandleConversationFlow(questions))
@@ -660,7 +660,7 @@ namespace steve_cyber
         private void clearChat(object sender, RoutedEventArgs e)
         {
             chats.Items.Clear();
-            DisplayAsciiArt();
+           
             error_method("Steve_Cyber", "Chat history has been cleared. How can I help you today?");
             activityLog.AddLogEntry("Chat cleared by " + username);
         }

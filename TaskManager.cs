@@ -14,8 +14,8 @@ namespace steve_cyber
         public TaskManager(ActivityLog log)
         {
             activityLog = log;
-            // Update this with your MySQL connection details
-            connectionString = "Server=localhost;Database=cyberchatbot;Uid=root;Pwd=;";
+            // MySQL connection details
+            connectionString = "Server=localhost;Database=cyberchatbot;Uid=root;Pwd=Thatonong123;";
             CreateTableIfNotExists();
         }
 
