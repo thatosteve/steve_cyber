@@ -12,7 +12,7 @@
 
         <!-- HOME GRID -->
         <Grid x:Name="home_grid" Visibility="Visible" Background="#1A1A2E">
-            <Image Source="/logo.png" Height="180" Width="270" Margin="0,50,0,200"/>
+            <Image Source="/logo.jpg" Height="180" Width="270" Margin="0,50,0,200"/>
             <TextBlock Text="Welcome to Steve_Cyber" Height="35" Width="350" TextAlignment="Center" Margin="0,20,0,0" FontFamily="Arial Rounded MT Bold" Foreground="#00D4FF" FontSize="22" FontWeight="Bold"/>
             <TextBlock Text="Your Smart Cybersecurity Assistant" Height="25" Width="300" TextAlignment="Center" Margin="0,65,0,0" FontFamily="Arial Rounded MT Bold" Foreground="#A0A0B0" FontSize="12"/>
             <Button Height="45" Width="280" Margin="0,220,0,0" Content="Get Started" Click="proceed" Background="#00D4FF" Foreground="#1A1A2E" FontFamily="Arial Rounded MT Bold" FontWeight="Bold" FontSize="14" BorderThickness="0" Cursor="Hand"/>
