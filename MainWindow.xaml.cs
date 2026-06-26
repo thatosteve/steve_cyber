@@ -35,8 +35,6 @@ namespace steve_cyber
         private bool isQuizMode = false;
         private bool isTaskMode = false;
 
-       
-
         public MainWindow()
         {
             InitializeComponent();
@@ -49,13 +47,10 @@ namespace steve_cyber
             activityLog.AddLogEntry("Application started");
 
             new Steve_Cyber(reply, ignore) { };
-            
 
             voice_greeting greet = new voice_greeting();
             greet.greet();
         }
-
-       
 
         private void proceed(object sender, RoutedEventArgs e)
         {
@@ -87,7 +82,7 @@ namespace steve_cyber
             error_method("Steve_Cyber", "What would you like to learn about today?");
         }
 
-        // ---- PART 3: QUIZ METHODS ----
+        // PART 3: QUIZ METHODS
 
         private void StartQuiz(object sender, RoutedEventArgs e)
         {
@@ -169,7 +164,7 @@ namespace steve_cyber
             }
         }
 
-        // ---- PART 3: TASK METHODS WITH REMINDERS ----
+        //  PART 3 TASK METHODS WITH REMINDERS (Using DASH - )
 
         private void ShowTasks(object sender, RoutedEventArgs e)
         {
@@ -199,8 +194,8 @@ namespace steve_cyber
             }
 
             message += "\nCommands:\n";
-            message += "- add task: [title] | [days] - Add task with optional reminder (days)\n";
-            message += "- add full task: [title] | [desc] | [days]\n";
+            message += "- add task: [title] - [days] - Add task with reminder (days)\n";
+            message += "- add full task: [title] - [desc] - [days]\n";
             message += "- remind [id] [days] - Set reminder for existing task\n";
             message += "- complete [id]\n";
             message += "- delete [id]";
@@ -213,17 +208,27 @@ namespace steve_cyber
         {
             string lowerInput = input.ToLower().Trim();
 
-            // ========== ADD TASK WITH OPTIONAL REMINDER ==========
+            // ADD TASK WITH OPTIONAL REMINDER (using dash - ) 
             if (lowerInput.StartsWith("add task:"))
             {
                 string taskData = input.Substring(input.IndexOf(':') + 1).Trim();
                 string title = taskData;
                 int days = 0;
 
-                // Check if user specified days with "|"
-                if (taskData.Contains('|'))
+                // Check if user specified days with " - "
+                if (taskData.Contains(" - "))
                 {
-                    string[] parts = taskData.Split('|');
+                    string[] parts = taskData.Split(new string[] { " - " }, StringSplitOptions.None);
+                    title = parts[0].Trim();
+                    if (parts.Length > 1 && int.TryParse(parts[1].Trim(), out days))
+                    {
+                        // days parsed
+                    }
+                }
+                // Also check for single dash without spaces
+                else if (taskData.Contains("-"))
+                {
+                    string[] parts = taskData.Split('-');
                     title = parts[0].Trim();
                     if (parts.Length > 1 && int.TryParse(parts[1].Trim(), out days))
                     {
@@ -233,7 +238,7 @@ namespace steve_cyber
 
                 if (string.IsNullOrEmpty(title))
                 {
-                    error_method("Steve_Cyber", "Please provide a task title. Example: 'add task: Enable 2FA | 7'");
+                    error_method("Steve_Cyber", "Please provide a task title. Example: 'add task: Enable 2FA - 7'");
                     return;
                 }
 
@@ -257,11 +262,11 @@ namespace steve_cyber
                 return;
             }
 
-            // ========== ADD FULL TASK (title | description | days) ==========
+            // ADD FULL TASK (title - description - days)
             if (lowerInput.StartsWith("add full task:"))
             {
                 string taskData = input.Substring(input.IndexOf(':') + 1).Trim();
-                string[] parts = taskData.Split('|');
+                string[] parts = taskData.Split(new string[] { " - " }, StringSplitOptions.None);
 
                 string title = parts.Length > 0 ? parts[0].Trim() : "";
                 string description = parts.Length > 1 ? parts[1].Trim() : "";
@@ -269,7 +274,7 @@ namespace steve_cyber
 
                 if (string.IsNullOrEmpty(title))
                 {
-                    error_method("Steve_Cyber", "Please provide a task title.");
+                    error_method("Steve_Cyber", "Please provide a task title. Example: 'add full task: Review privacy - Check settings - 5'");
                     return;
                 }
 
@@ -293,30 +298,28 @@ namespace steve_cyber
                 return;
             }
 
-            // ========== REMIND COMMAND ==========
+            // REMIND COMMAND
             if (lowerInput.StartsWith("remind") || lowerInput.StartsWith("reminder"))
             {
                 string[] parts = input.Split(' ');
                 if (parts.Length < 3)
                 {
                     error_method("Steve_Cyber", "Usage: remind [taskId] [days]. Example: remind 1 7");
-                    error_method("Steve_Cyber", "Or: reminder 1 7");
                     return;
                 }
 
                 if (!int.TryParse(parts[1], out int taskId))
                 {
-                    error_method("Steve_Cyber", "Invalid task ID. Please enter a number. Example: remind 1 7");
+                    error_method("Steve_Cyber", "Invalid task ID. Please enter a number.");
                     return;
                 }
 
                 if (!int.TryParse(parts[2], out int days) || days <= 0)
                 {
-                    error_method("Steve_Cyber", "Invalid days. Please enter a positive number. Example: remind 1 7");
+                    error_method("Steve_Cyber", "Invalid days. Please enter a positive number.");
                     return;
                 }
 
-                // Check if task exists
                 var task = taskManager.GetTask(taskId);
                 if (task == null)
                 {
@@ -344,7 +347,7 @@ namespace steve_cyber
                 return;
             }
 
-            // ========== COMPLETE TASK ==========
+            // COMPLETE TASK
             if (lowerInput.StartsWith("complete"))
             {
                 string[] parts = input.Split(' ');
@@ -374,7 +377,7 @@ namespace steve_cyber
                 return;
             }
 
-            // ========== DELETE TASK ==========
+            // DELETE TASK 
             if (lowerInput.StartsWith("delete"))
             {
                 string[] parts = input.Split(' ');
@@ -406,14 +409,14 @@ namespace steve_cyber
 
             error_method("Steve_Cyber", "Unknown task command. Available commands:\n" +
                                         "- tasks - View all tasks\n" +
-                                        "- add task: [title] | [days] - Add task (optional days)\n" +
-                                        "- add full task: [title] | [desc] | [days]\n" +
+                                        "- add task: [title] - [days] - Add task with reminder\n" +
+                                        "- add full task: [title] - [desc] - [days]\n" +
                                         "- remind [id] [days] - Set reminder for task\n" +
                                         "- complete [id]\n" +
                                         "- delete [id]");
         }
 
-        // ---- PART 3: ACTIVITY LOG METHODS ----
+        //PART 3 ACTIVITY LOG METHODS
 
         private void ShowActivityLog(object sender, RoutedEventArgs e)
         {
@@ -438,7 +441,7 @@ namespace steve_cyber
             }
         }
 
-        // ---- EXISTING METHODS ----
+        
 
         private bool ValidateInput(string input)
         {
@@ -473,7 +476,6 @@ namespace steve_cyber
             return true;
         }
 
-        // --- FIXED send() method with remind support ---
         private void send(object sender, RoutedEventArgs e)
         {
             string rawQuestion = question.Text.ToString().Trim();
@@ -504,7 +506,7 @@ namespace steve_cyber
                 return;
             }
 
-            // ====== TASK COMMANDS (MUST BE BEFORE GENERAL "task" CHECK) ======
+            //  TASK COMMANDS 
             if (rawQuestion.ToLower().Contains("add task") ||
                 rawQuestion.ToLower().StartsWith("complete ") ||
                 rawQuestion.ToLower().StartsWith("delete ") ||
@@ -735,7 +737,6 @@ namespace steve_cyber
         private void clearChat(object sender, RoutedEventArgs e)
         {
             chats.Items.Clear();
-           
             error_method("Steve_Cyber", "Chat history has been cleared. How can I help you today?");
             activityLog.AddLogEntry("Chat cleared by " + username);
         }
@@ -964,6 +965,7 @@ namespace steve_cyber
             }
         }
 
+        // BOT MESSAGES - CYAN
         private void error_method(string name, string message)
         {
             Border messageBorder = new Border
@@ -1006,6 +1008,7 @@ namespace steve_cyber
             chats.ScrollIntoView(chats.Items[chats.Items.Count - 1]);
         }
 
+        // USER MESSAGES - GREEN
         private void error_method_user(string name, string message)
         {
             Border messageBorder = new Border
