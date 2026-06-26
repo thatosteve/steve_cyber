@@ -290,7 +290,7 @@ namespace steve_cyber
 
         public void answers(ArrayList add_answers)
         {
-            // Greetings - South African context
+            // Greetings South African context
             add_answers.Add("greeting Howzit! I'm CyberMind, your digital guardian! Doing great, thanks for asking. How are you today?");
             add_answers.Add("greeting Sharp sharp! CyberMind here, ready to help you stay safe online! What can I assist you with?");
             add_answers.Add("greeting Aweh! I'm CyberMind, your cybersecurity assistant. Hope you're having a secure day!");

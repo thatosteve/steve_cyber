@@ -1,8 +1,7 @@
-﻿using MySql.Data.MySqlClient;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Data;
-using System.Data.SqlClient;
+using MySql.Data.MySqlClient;
+using System.Windows;
 
 namespace steve_cyber
 {
@@ -14,37 +13,41 @@ namespace steve_cyber
         public TaskManager(ActivityLog log)
         {
             activityLog = log;
-            // MySQL connection details
+            // UPDATE THIS WITH YOUR MYSQL PASSWORD
             connectionString = "Server=localhost;Database=cyberchatbot;Uid=root;Pwd=Thatonong123;";
-            CreateTableIfNotExists();
+
+            try
+            {
+                CreateTableIfNotExists();
+                activityLog.AddLogEntry("Database connection successful");
+            }
+            catch (Exception ex)
+            {
+                string msg = "Database connection failed: " + ex.Message;
+                activityLog.AddLogEntry(msg);
+                MessageBox.Show(msg, "Database Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void CreateTableIfNotExists()
         {
-            try
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
-                using (MySqlConnection conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
-                    string query = @"CREATE TABLE IF NOT EXISTS cybersecurity_tasks (
-                        id INT AUTO_INCREMENT PRIMARY KEY,
-                        username VARCHAR(100) NOT NULL,
-                        title VARCHAR(255) NOT NULL,
-                        description TEXT,
-                        reminder_date DATETIME,
-                        is_completed BOOLEAN DEFAULT FALSE,
-                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                    )";
+                conn.Open();
+                string query = @"CREATE TABLE IF NOT EXISTS cybersecurity_tasks (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    username VARCHAR(100) NOT NULL,
+                    title VARCHAR(255) NOT NULL,
+                    description TEXT,
+                    reminder_date DATETIME,
+                    is_completed BOOLEAN DEFAULT FALSE,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )";
 
-                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
-                    {
-                        cmd.ExecuteNonQuery();
-                    }
+                using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                {
+                    cmd.ExecuteNonQuery();
                 }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Database error: " + ex.Message);
             }
         }
 
@@ -83,7 +86,9 @@ namespace steve_cyber
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error adding task: " + ex.Message);
+                string errorMsg = "AddTask Error: " + ex.Message;
+                activityLog.AddLogEntry(errorMsg);
+                MessageBox.Show(errorMsg, "Database Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             return false;
         }
@@ -125,9 +130,78 @@ namespace steve_cyber
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error getting tasks: " + ex.Message);
+                activityLog.AddLogEntry("GetTasks Error: " + ex.Message);
             }
             return tasks;
+        }
+
+        public CybersecurityTask GetTask(int taskId)
+        {
+            try
+            {
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string query = "SELECT id, title, description, reminder_date, is_completed, created_at FROM cybersecurity_tasks WHERE id = @id";
+
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@id", taskId);
+                        using (MySqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                return new CybersecurityTask
+                                {
+                                    Id = reader.GetInt32("id"),
+                                    Title = reader.GetString("title"),
+                                    Description = reader.IsDBNull(reader.GetOrdinal("description")) ? "" : reader.GetString("description"),
+                                    ReminderDate = reader.IsDBNull(reader.GetOrdinal("reminder_date")) ? (DateTime?)null : reader.GetDateTime("reminder_date"),
+                                    IsCompleted = reader.GetBoolean("is_completed"),
+                                    CreatedAt = reader.GetDateTime("created_at")
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                activityLog.AddLogEntry("GetTask Error: " + ex.Message);
+            }
+            return null;
+        }
+
+        public bool SetReminder(int taskId, DateTime reminderDate)
+        {
+            try
+            {
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string query = "UPDATE cybersecurity_tasks SET reminder_date = @reminderDate WHERE id = @id";
+
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@reminderDate", reminderDate);
+                        cmd.Parameters.AddWithValue("@id", taskId);
+
+                        int rowsAffected = cmd.ExecuteNonQuery();
+                        if (rowsAffected > 0)
+                        {
+                            activityLog.AddLogEntry("Reminder set for task ID " + taskId + " on " + reminderDate.ToString("yyyy-MM-dd"));
+                            return true;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                string errorMsg = "SetReminder Error: " + ex.Message;
+                activityLog.AddLogEntry(errorMsg);
+                MessageBox.Show(errorMsg, "Database Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            return false;
         }
 
         public bool MarkTaskComplete(int taskId)
@@ -153,7 +227,7 @@ namespace steve_cyber
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error marking task complete: " + ex.Message);
+                activityLog.AddLogEntry("MarkTaskComplete Error: " + ex.Message);
             }
             return false;
         }
@@ -181,7 +255,7 @@ namespace steve_cyber
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error deleting task: " + ex.Message);
+                activityLog.AddLogEntry("DeleteTask Error: " + ex.Message);
             }
             return false;
         }
@@ -205,7 +279,19 @@ namespace steve_cyber
         {
             if (ReminderDate.HasValue)
             {
-                return "Reminder: " + ReminderDate.Value.ToString("yyyy-MM-dd HH:mm");
+                TimeSpan daysLeft = ReminderDate.Value - DateTime.Now;
+                if (daysLeft.TotalDays > 0)
+                {
+                    return "Reminder: " + ReminderDate.Value.ToString("yyyy-MM-dd") + " (" + Math.Ceiling(daysLeft.TotalDays) + " days left)";
+                }
+                else if (daysLeft.TotalDays > -1)
+                {
+                    return "Reminder: TODAY!";
+                }
+                else
+                {
+                    return "Reminder: OVERDUE (was on " + ReminderDate.Value.ToString("yyyy-MM-dd") + ")";
+                }
             }
             return "No reminder set";
         }

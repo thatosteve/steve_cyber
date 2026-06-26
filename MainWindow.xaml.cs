@@ -35,8 +35,7 @@ namespace steve_cyber
         private bool isQuizMode = false;
         private bool isTaskMode = false;
 
-        
-      
+       
 
         public MainWindow()
         {
@@ -56,7 +55,7 @@ namespace steve_cyber
             greet.greet();
         }
 
-      
+       
 
         private void proceed(object sender, RoutedEventArgs e)
         {
@@ -170,7 +169,7 @@ namespace steve_cyber
             }
         }
 
-        // PART 3 TASK METHOD
+        // ---- PART 3: TASK METHODS WITH REMINDERS ----
 
         private void ShowTasks(object sender, RoutedEventArgs e)
         {
@@ -200,9 +199,11 @@ namespace steve_cyber
             }
 
             message += "\nCommands:\n";
-            message += "- complete [id]  - Mark task as complete\n";
-            message += "- delete [id]    - Delete a task\n";
-            message += "- add task: [title] - Add new task";
+            message += "- add task: [title] | [days] - Add task with optional reminder (days)\n";
+            message += "- add full task: [title] | [desc] | [days]\n";
+            message += "- remind [id] [days] - Set reminder for existing task\n";
+            message += "- complete [id]\n";
+            message += "- delete [id]";
 
             error_method("Steve_Cyber", message);
             activityLog.AddLogEntry("Tasks viewed by " + username);
@@ -212,20 +213,41 @@ namespace steve_cyber
         {
             string lowerInput = input.ToLower().Trim();
 
-            // Add task
-            if (lowerInput.StartsWith("add task:") || lowerInput.StartsWith("add task "))
+            // ========== ADD TASK WITH OPTIONAL REMINDER ==========
+            if (lowerInput.StartsWith("add task:"))
             {
-                string title = input.Substring(input.IndexOf(':') + 1).Trim();
+                string taskData = input.Substring(input.IndexOf(':') + 1).Trim();
+                string title = taskData;
+                int days = 0;
+
+                // Check if user specified days with "|"
+                if (taskData.Contains('|'))
+                {
+                    string[] parts = taskData.Split('|');
+                    title = parts[0].Trim();
+                    if (parts.Length > 1 && int.TryParse(parts[1].Trim(), out days))
+                    {
+                        // days parsed
+                    }
+                }
+
                 if (string.IsNullOrEmpty(title))
                 {
-                    error_method("Steve_Cyber", "Please provide a task title. Example: 'add task: Enable 2FA'");
+                    error_method("Steve_Cyber", "Please provide a task title. Example: 'add task: Enable 2FA | 7'");
                     return;
                 }
 
-                bool result = taskManager.AddTask(username, title, "", null);
+                DateTime? reminderDate = days > 0 ? (DateTime?)DateTime.Now.AddDays(days) : null;
+
+                bool result = taskManager.AddTask(username, title, "", reminderDate);
                 if (result)
                 {
-                    error_method("Steve_Cyber", "Task added successfully! Use 'tasks' to view it.");
+                    string msg = "Task added successfully: " + title;
+                    if (reminderDate.HasValue)
+                    {
+                        msg += " (Reminder set for " + days + " days from now)";
+                    }
+                    error_method("Steve_Cyber", msg);
                     activityLog.AddLogEntry("Task added: " + title);
                 }
                 else
@@ -235,7 +257,7 @@ namespace steve_cyber
                 return;
             }
 
-            // Add full task with description and reminder
+            // ========== ADD FULL TASK (title | description | days) ==========
             if (lowerInput.StartsWith("add full task:"))
             {
                 string taskData = input.Substring(input.IndexOf(':') + 1).Trim();
@@ -271,7 +293,58 @@ namespace steve_cyber
                 return;
             }
 
-            // Complete task
+            // ========== REMIND COMMAND ==========
+            if (lowerInput.StartsWith("remind") || lowerInput.StartsWith("reminder"))
+            {
+                string[] parts = input.Split(' ');
+                if (parts.Length < 3)
+                {
+                    error_method("Steve_Cyber", "Usage: remind [taskId] [days]. Example: remind 1 7");
+                    error_method("Steve_Cyber", "Or: reminder 1 7");
+                    return;
+                }
+
+                if (!int.TryParse(parts[1], out int taskId))
+                {
+                    error_method("Steve_Cyber", "Invalid task ID. Please enter a number. Example: remind 1 7");
+                    return;
+                }
+
+                if (!int.TryParse(parts[2], out int days) || days <= 0)
+                {
+                    error_method("Steve_Cyber", "Invalid days. Please enter a positive number. Example: remind 1 7");
+                    return;
+                }
+
+                // Check if task exists
+                var task = taskManager.GetTask(taskId);
+                if (task == null)
+                {
+                    error_method("Steve_Cyber", "Task with ID " + taskId + " not found. Type 'tasks' to see your tasks.");
+                    return;
+                }
+
+                if (task.IsCompleted)
+                {
+                    error_method("Steve_Cyber", "Task " + taskId + " is already completed. Cannot set a reminder.");
+                    return;
+                }
+
+                DateTime reminderDate = DateTime.Now.AddDays(days);
+                bool result = taskManager.SetReminder(taskId, reminderDate);
+                if (result)
+                {
+                    error_method("Steve_Cyber", "Reminder set for task '" + task.Title + "' on " + reminderDate.ToString("yyyy-MM-dd") + " (" + days + " days from now)");
+                    activityLog.AddLogEntry("Reminder set for task ID " + taskId);
+                }
+                else
+                {
+                    error_method("Steve_Cyber", "Failed to set reminder. Please check the task ID.");
+                }
+                return;
+            }
+
+            // ========== COMPLETE TASK ==========
             if (lowerInput.StartsWith("complete"))
             {
                 string[] parts = input.Split(' ');
@@ -301,7 +374,7 @@ namespace steve_cyber
                 return;
             }
 
-            // Delete task
+            // ========== DELETE TASK ==========
             if (lowerInput.StartsWith("delete"))
             {
                 string[] parts = input.Split(' ');
@@ -331,7 +404,13 @@ namespace steve_cyber
                 return;
             }
 
-            error_method("Steve_Cyber", "Unknown task command. Available commands:\n- tasks - View all tasks\n- add task: [title]\n- complete [id]\n- delete [id]");
+            error_method("Steve_Cyber", "Unknown task command. Available commands:\n" +
+                                        "- tasks - View all tasks\n" +
+                                        "- add task: [title] | [days] - Add task (optional days)\n" +
+                                        "- add full task: [title] | [desc] | [days]\n" +
+                                        "- remind [id] [days] - Set reminder for task\n" +
+                                        "- complete [id]\n" +
+                                        "- delete [id]");
         }
 
         // ---- PART 3: ACTIVITY LOG METHODS ----
@@ -359,9 +438,8 @@ namespace steve_cyber
             }
         }
 
-        // ---- EXISTING METHODS (updated for Part 3) ----
+        // ---- EXISTING METHODS ----
 
-        // Input validation
         private bool ValidateInput(string input)
         {
             if (string.IsNullOrWhiteSpace(input))
@@ -395,7 +473,7 @@ namespace steve_cyber
             return true;
         }
 
-        // --- FIXED send() method with reordered checks ---
+        // --- FIXED send() method with remind support ---
         private void send(object sender, RoutedEventArgs e)
         {
             string rawQuestion = question.Text.ToString().Trim();
@@ -408,7 +486,7 @@ namespace steve_cyber
 
             string questions = RemoveSpecialCharacters(rawQuestion);
 
-            // ========== QUIZ MODE ==========
+            // Quiz mode
             if (isQuizMode)
             {
                 error_method_user(username, rawQuestion);
@@ -417,7 +495,7 @@ namespace steve_cyber
                 return;
             }
 
-            // ========== QUIZ TRIGGER ==========
+            // Quiz trigger
             if (rawQuestion.ToLower().Contains("quiz") || rawQuestion.ToLower().Contains("test"))
             {
                 error_method_user(username, rawQuestion);
@@ -426,10 +504,12 @@ namespace steve_cyber
                 return;
             }
 
-            // ========== TASK COMMANDS (MUST BE BEFORE GENERAL "task" CHECK) ==========
+            // ====== TASK COMMANDS (MUST BE BEFORE GENERAL "task" CHECK) ======
             if (rawQuestion.ToLower().Contains("add task") ||
                 rawQuestion.ToLower().StartsWith("complete ") ||
-                rawQuestion.ToLower().StartsWith("delete "))
+                rawQuestion.ToLower().StartsWith("delete ") ||
+                rawQuestion.ToLower().StartsWith("remind ") ||
+                rawQuestion.ToLower().StartsWith("reminder "))
             {
                 error_method_user(username, rawQuestion);
                 HandleTaskInput(rawQuestion);
@@ -437,7 +517,7 @@ namespace steve_cyber
                 return;
             }
 
-            // ========== TASK TRIGGER (Show tasks) ==========
+            // Task trigger (show tasks)
             if (rawQuestion.ToLower().Contains("task") || rawQuestion.ToLower().Contains("tasks"))
             {
                 error_method_user(username, rawQuestion);
@@ -446,7 +526,7 @@ namespace steve_cyber
                 return;
             }
 
-            // ========== LOG TRIGGER ==========
+            // Log trigger
             if (rawQuestion.ToLower().Contains("log") || rawQuestion.ToLower().Contains("what have you done"))
             {
                 error_method_user(username, rawQuestion);
@@ -455,7 +535,7 @@ namespace steve_cyber
                 return;
             }
 
-            // ========== LOG SHOW MORE ==========
+            // Log show more
             if (rawQuestion.ToLower().Contains("show more") && rawQuestion.ToLower().Contains("log"))
             {
                 error_method_user(username, rawQuestion);
@@ -464,7 +544,7 @@ namespace steve_cyber
                 return;
             }
 
-            // ========== NORMAL CHAT ==========
+            // Normal chat
             error_method_user(username, rawQuestion);
 
             if (HandleConversationFlow(questions))
@@ -530,13 +610,13 @@ namespace steve_cyber
         {
             Dictionary<string, string> extendedInfo = new Dictionary<string, string>
             {
-                { "password", "Strong passwords should be at least 12 characters long and include uppercase, lowercase, numbers, and symbols. Never reuse passwords across different accounts! Consider using a password manager like Bitwarden or LastPass to generate and store secure passwords." },
-                { "phishing", "Phishing emails often create urgency ('Your account will be closed!'), have spelling errors, or come from slightly misspelled email addresses. Always hover over links before clicking and never download attachments from unknown senders!" },
-                { "scam", "Online scammers in South Africa often pretend to be from banks like Capitec, FNB, or SARS. Remember: No legitimate company will ever ask for your PIN, password, or OTP via phone, email, or WhatsApp. Hang up and call the official number!" },
-                { "privacy", "Your personal information is valuable to scammers! Limit what you share on social media - birthday, address, location tags, and even pet names can be used to guess security questions. Review your privacy settings monthly!" },
-                { "firewall", "A firewall is like a security guard for your internet connection. Windows has a built-in firewall - make sure it is always enabled! It blocks unauthorized access while allowing legitimate traffic through." },
-                { "2fa", "Two-Factor Authentication (2FA) adds a second lock to your accounts. Even if someone steals your password, they still need your phone to get in. Use authenticator apps like Google Authenticator or Microsoft Authenticator instead of SMS when possible!" },
-                { "wifi", "Public Wi-Fi at malls, coffee shops, and airports is convenient but risky! Hackers can intercept your data. Always use a VPN (Virtual Private Network) on public networks, and avoid logging into banking, email, or social media." }
+                { "password", "Strong passwords should be at least 12 characters long and include uppercase, lowercase, numbers, and symbols. Never reuse passwords across different accounts!" },
+                { "phishing", "Phishing emails often create urgency, have spelling errors, or come from slightly misspelled email addresses. Always hover over links before clicking." },
+                { "scam", "Online scammers in South Africa often pretend to be from banks like Capitec, FNB, or SARS. No legitimate company will ever ask for your PIN or OTP." },
+                { "privacy", "Your personal information is valuable to scammers! Limit what you share on social media - birthday, address, location tags." },
+                { "firewall", "A firewall is like a security guard for your internet connection. Windows has a built-in firewall - make sure it is always enabled!" },
+                { "2fa", "Two-Factor Authentication adds a second lock to your accounts. Even if someone steals your password, they still need your phone." },
+                { "wifi", "Public Wi-Fi is convenient but risky! Hackers can intercept your data. Always use a VPN on public networks." }
             };
 
             foreach (var key in extendedInfo.Keys)
@@ -547,7 +627,7 @@ namespace steve_cyber
                 }
             }
 
-            return "Staying safe online requires constant awareness. Always think before you click, verify the source of messages, and when in doubt - do not click! Trust your instincts.";
+            return "Staying safe online requires constant awareness. Always think before you click.";
         }
 
         private string GetAlternateTip(string topic)
@@ -556,27 +636,23 @@ namespace steve_cyber
             {
                 { "password", new List<string> {
                     "Use a passphrase like 'PurpleElephantDances@Midnight' - easy to remember, hard to crack!",
-                    "Enable Two-Factor Authentication (2FA) on all accounts that offer it - especially email and banking!",
-                    "Change your passwords every 3-6 months for important accounts like email, banking, and social media!",
-                    "Never write passwords on sticky notes or save them in unencrypted files on your computer!"
+                    "Enable Two-Factor Authentication on all accounts that offer it!",
+                    "Change your passwords every 3-6 months for important accounts!"
                 }},
                 { "phishing", new List<string> {
-                    "Check the sender's email address carefully - 'support@paypa1.com' is fake, 'support@paypal.com' is real!",
-                    "Never click links in suspicious emails - type the website address directly into your browser instead!",
-                    "Scammers also use SMS (smishing) and phone calls (vishing). Be suspicious of unexpected messages!",
-                    "Look for red flags: urgent language, spelling errors, generic greetings like 'Dear Customer', and requests for personal info!"
+                    "Check the sender's email address carefully - 'support@paypa1.com' is fake!",
+                    "Never click links in suspicious emails - type the website address directly!",
+                    "Look for red flags: urgent language, spelling errors, and requests for personal info!"
                 }},
                 { "scam", new List<string> {
-                    "Got a call from 'your bank'? Hang up and call back using the official number from their website or your bank card!",
-                    "Never send money to someone you have not met in person - even if they promise lottery winnings or a 'free gift'!",
-                    "Job scams are common in SA. Never pay for a job application or training - legitimate jobs pay YOU!",
-                    "WhatsApp scams: 'Hi Mom, I broke my phone' messages are often scammers. Always verify by calling the person directly!"
+                    "Got a call from 'your bank'? Hang up and call back using the official number!",
+                    "Never send money to someone you have not met in person!",
+                    "Job scams are common in SA. Never pay for a job application!"
                 }},
                 { "privacy", new List<string> {
-                    "Think before you post! Photos can reveal your location, workplace, daily routine, and even your house number!",
-                    "Review your privacy settings on Facebook, Instagram, TikTok, and LinkedIn every few months - platforms change settings often!",
-                    "Use different email addresses for different purposes: one for banking, one for shopping, one for social media!",
-                    "Never share your ID number, passport number, or home address online - not even in 'harmless' quizzes!"
+                    "Think before you post! Photos can reveal your location and daily routine!",
+                    "Review your privacy settings on social media every few months!",
+                    "Use different email addresses for different purposes!"
                 }}
             };
 
@@ -591,11 +667,10 @@ namespace steve_cyber
             }
 
             string[] generalTips = {
-                "Always use unique passwords for every account - no exceptions!",
-                "Keep your software, apps, and operating system updated - updates fix security holes!",
-                "Enable fingerprint or face recognition on your phone for extra security!",
-                "Do not install apps from outside the official Google Play Store or Apple App Store!",
-                "If something feels off about an email or message - trust your gut and do not click!"
+                "Always use unique passwords for every account!",
+                "Keep your software and apps updated - updates fix security holes!",
+                "Enable fingerprint or face recognition on your phone!",
+                "If something feels off about an email - trust your gut and do not click!"
             };
 
             Random random = new Random();
@@ -617,7 +692,7 @@ namespace steve_cyber
                 }
                 else
                 {
-                    error_method("Steve_Cyber", "You have not told me about your interests yet! Try saying 'I am interested in privacy' or 'I like learning about passwords' and I will remember!");
+                    error_method("Steve_Cyber", "You have not told me about your interests yet!");
                 }
                 return true;
             }
@@ -898,16 +973,8 @@ namespace steve_cyber
                 CornerRadius = new CornerRadius(8)
             };
 
-            if (name.ToLower().Contains("steve_cyber") || name.ToLower().Contains("steve"))
-            {
-                messageBorder.Background = new SolidColorBrush(Color.FromRgb(22, 33, 62));
-                messageBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(0, 212, 255));
-            }
-            else
-            {
-                messageBorder.Background = new SolidColorBrush(Color.FromRgb(22, 33, 62));
-                messageBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(0, 212, 255));
-            }
+            messageBorder.Background = new SolidColorBrush(Color.FromRgb(22, 33, 62));
+            messageBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(0, 212, 255));
             messageBorder.BorderThickness = new Thickness(1);
 
             TextBlock messageText = new TextBlock
